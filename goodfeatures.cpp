@@ -39,19 +39,23 @@ int main(void){
 
   cvNamedWindow("GoodFeatures",CV_WINDOW_AUTOSIZE);
 
-  frame1 = cvQueryFrame(pCapturedImage);
-  CvPoint2D32f frame1_features[300];
+
 
   while(cvWaitKey(10)){
-    
+    frame1 = cvQueryFrame(pCapturedImage);
     CvSize frame_size;
     frame_size.width = frame1->width;
     frame_size.height = frame1->height;
 
+    allocateOnDemand( &frame1_color, frame_size, IPL_DEPTH_8U, 3 );
+    cvConvertImage(frame1, frame1_color, 0);
+    
     allocateOnDemand( &frame1b, frame_size, IPL_DEPTH_8U, 1 );
     cvConvertImage(frame1, frame1b, 0);
 
-    int nfeat = 300;
+    int nfeat = 400;
+
+    CvPoint2D32f frame1_features[400];
 
     cvGoodFeaturesToTrack(frame1b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
 
@@ -82,12 +86,15 @@ int main(void){
 
 
 /* For fun (and debugging :)), let's draw the flow field. */
+
+      int up=0, down=0, left=0, right=0;
+
      for(int i = 0; i < nfeat; i++)
       {
               /* If Pyramidal Lucas Kanade didn't really find the feature, skip it. */
               if ( optical_flow_found_feature[i] == 0 )       continue;
 
-              int line_thickness;                             line_thickness = 1;
+              int line_thickness;                             line_thickness = 5;
               /* CV_RGB(red, green, blue) is the red, green, and blue components
                * of the color you want, each out of 255.
                */
@@ -104,12 +111,25 @@ int main(void){
               q.x = (int) frame2_features[i].x;
               q.y = (int) frame2_features[i].y;
 
-              double angle;           angle = atan2( (double) p.y - q.y, (double) p.x - q.x );
-              double hypotenuse;      hypotenuse = sqrt( square(p.y - q.y) + square(p.x - q.x) );
+              if (p.x < q.x) right++;
+              else left++;
 
-              /* Here we lengthen the arrow by a factor of three. */
-              q.x = (int) (p.x - 3 * hypotenuse * cos(angle));
-              q.y = (int) (p.y - 3 * hypotenuse * sin(angle));
+              if (p.y < q.y) up++;
+              else down++;
+  
+      }
+
+      CvFont font;
+      double hScale=1.0;
+      double vScale=1.0;
+      int    lineWidth=2;
+      cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, hScale,vScale,0,lineWidth);
+
+      if (up > down )cvPutText (frame1_color,"Down",cvPoint(100,400), &font, cvScalar(255,255,0));
+      else cvPutText (frame1_color,"Up",cvPoint(100,400), &font, cvScalar(255,255,0));
+
+      if (left > right and abs(left-right) > 50) cvPutText (frame1_color,"Right",cvPoint(300,400), &font, cvScalar(255,255,0));
+      else cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
 
               /* Now we draw the main line of the arrow. */
               /* "frame1" is the frame to draw on.
@@ -118,18 +138,17 @@ int main(void){
                * "CV_AA" means antialiased drawing.
                * "0" means no fractional bits in the center cooridinate or radius.
                */
-              cvLine( frame1b, p, q, line_color, line_thickness, CV_AA, 0 );
+//              cvLine( frame1b, p, q, line_color, line_thickness, CV_AA, 0 );
               /* Now draw the tips of the arrow.  I do some scaling so that the
                * tips look proportional to the main line of the arrow.
                */
-              p.x = (int) (q.x + 9 * cos(angle + pi / 4));
+/*              p.x = (int) (q.x + 9 * cos(angle + pi / 4));
               p.y = (int) (q.y + 9 * sin(angle + pi / 4));
               cvLine( frame1b, p, q, line_color, line_thickness, CV_AA, 0 );
               p.x = (int) (q.x + 9 * cos(angle - pi / 4));
               p.y = (int) (q.y + 9 * sin(angle - pi / 4));
               cvLine( frame1b, p, q, line_color, line_thickness, CV_AA, 0 );
-      }
-
+*/
 
    /*for( int i = 0; i < nfeat; i++){
       CvPoint p;
@@ -138,7 +157,7 @@ int main(void){
       cvCircle(frame, p, 2, CV_RGB(255, 0, 0), -1);
     }*/
 
-    cvShowImage("GoodFeatures", frame1b);
+    cvShowImage("GoodFeatures", frame1_color);
   }
   //cvWaitKey();
 }
