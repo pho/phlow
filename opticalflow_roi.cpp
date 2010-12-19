@@ -141,11 +141,11 @@ int main(void){
               q.x = (int) frame2_features[i].x + ROI.x;
               q.y = (int) frame2_features[i].y + ROI.y;
 
-              if (p.x < q.x) right++;
-              else left++;
+              if (q.x - p.x > 10) right++;
+              else if (p.x - q.x > 10) left++;
 
-              if (p.y < q.y) up++;
-              else down++;
+              if  (q.y - p.y > 10) up++;
+              else if (p.y - q.y > 10)down++;
 
 
              double angle;           angle = atan2( (double) p.y - q.y, (double) p.x - q.x );
@@ -180,11 +180,14 @@ int main(void){
       int    lineWidth=2;
       cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, hScale,vScale,0,lineWidth);
 
-      if (up > down )cvPutText (frame1_color,"Down",cvPoint(100,400), &font, cvScalar(255,255,0));
-      else cvPutText (frame1_color,"Up",cvPoint(100,400), &font, cvScalar(255,255,0));
+      if (up > down and up > 30) {
+        cvPutText (frame1_color,"Down",cvPoint(100,400), &font, cvScalar(255,255,0));
+        cout << "DOWN!" << endl;
+      }
+      else if(down > 30) cvPutText (frame1_color,"Up",cvPoint(100,400), &font, cvScalar(255,255,0));
 
-      if (left > right and abs(left-right) > 50) cvPutText (frame1_color,"Right",cvPoint(300,400), &font, cvScalar(255,255,0));
-      else cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
+      if (left > right and left > 30) cvPutText (frame1_color,"Right",cvPoint(300,400), &font, cvScalar(255,255,0));
+      else if(right > 30)  cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
 
       cvResetImageROI(frame2b);
       cvResetImageROI(frame1b);
