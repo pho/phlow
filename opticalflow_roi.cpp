@@ -29,8 +29,8 @@ inline static void allocateOnDemand( IplImage **img, CvSize size, int depth, int
        }
 }
 
-CvRect ROI = cvRect(0, 0, 200, 200);
-CvRect tempROI = cvRect(0, 0, 200, 200);
+CvRect ROI = cvRect(100, 100, 200, 200);
+CvRect tempROI = cvRect(100, 100, 200, 200);
 
 void mouseCallback(int event, int x, int y, int flags, void *param){
 
@@ -82,10 +82,11 @@ int main(void){
     int nfeat = 400;
 
     CvPoint2D32f frame1_features[400];
-    cvResetImageROI(frame1b);
+
     cvSetImageROI(frame1b, ROI);
-    
     cvGoodFeaturesToTrack(frame1b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
+    cvResetImageROI(frame1b);
+
 
     frame2 = cvQueryFrame(pCapturedImage);
     allocateOnDemand( &frame2b, frame_size, IPL_DEPTH_8U, 1 );
@@ -109,10 +110,10 @@ int main(void){
     allocateOnDemand( &pyramid1, frame_size, IPL_DEPTH_8U, 1);
     allocateOnDemand( &pyramid2, frame_size, IPL_DEPTH_8U, 1);
     
-    cvResetImageROI(frame2b);
     cvSetImageROI(frame2b, ROI);
+    cvSetImageROI(frame1b, ROI);
     cvCalcOpticalFlowPyrLK(frame1b, frame2b, pyramid1, pyramid2, frame1_features, frame2_features, nfeat, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error,optical_flow_termination_criteria, 0);
-
+    
 
 /* For fun (and debugging :)), let's draw the flow field. */
 
@@ -135,10 +136,10 @@ int main(void){
                * (ie: there's not much motion between the frames).  So let's lengthen them by a factor of 3.
                */
               CvPoint p,q;
-              p.x = (int) frame1_features[i].x;
-              p.y = (int) frame1_features[i].y;
-              q.x = (int) frame2_features[i].x;
-              q.y = (int) frame2_features[i].y;
+              p.x = (int) frame1_features[i].x + ROI.x;
+              p.y = (int) frame1_features[i].y + ROI.y;
+              q.x = (int) frame2_features[i].x + ROI.x;
+              q.y = (int) frame2_features[i].y + ROI.y;
 
               if (p.x < q.x) right++;
               else left++;
@@ -184,6 +185,11 @@ int main(void){
 
       if (left > right and abs(left-right) > 50) cvPutText (frame1_color,"Right",cvPoint(300,400), &font, cvScalar(255,255,0));
       else cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
+
+      cvResetImageROI(frame2b);
+      cvResetImageROI(frame1b);
+
+      cvRectangle(frame1_color, cvPoint(ROI.x, ROI.y), cvPoint(ROI.x+ROI.width,ROI.y+ROI.height), cvScalar(255,0,0), 1);
 
 
 
