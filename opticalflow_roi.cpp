@@ -73,6 +73,14 @@ int main(void){
 
   CvCapture *pCapturedImage = cvCreateCameraCapture(0);
 
+  if (pCapturedImage == NULL)
+      {
+            /* Either the video didn't exist OR it uses a codec OpenCV
+             *     * doesn't support.
+             *         */
+            fprintf(stderr, "Error: Can't open video.\n");
+            return -1;
+  }
   cvNamedWindow("GoodFeatures",CV_WINDOW_AUTOSIZE);
 
   cvSetMouseCallback("GoodFeatures", mouseCallback, NULL);
