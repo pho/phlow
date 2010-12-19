@@ -187,25 +187,12 @@ int main(void){
               p.y = (int) (q.y + 9 * sin(angle - pi / 4));
               cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
 
-
             // New ROI Center
             if (optical_flow_found_feature[i] != 0){
               f2featfound++;
-
-              //if (frame2_features[i].x > ROI.x+ROI.width/2)
                 NewCenterX += q.x;
-              //else
-               // NewCenterX -= q.x;
-
-              //if (frame2_features[i].y > ROI.y+ROI.height/2)
                 NewCenterY += q.y;
-              //else
-              //  NewCenterY -= q.y;
-
             }
-
-
-  
       }
 
       CvFont font;
@@ -241,11 +228,13 @@ int main(void){
       if (ROI.y > frame1_color->height) ROI.y = frame1_color->height-1;
       if (ROI.y < 0) ROI.y = 0;
       cout << "Next ROI Secured" << ROI.x << " " << ROI.y << endl << endl;
-
+      
+      //Draw NewCenter
       CvPoint center;
-      center.x = ROI.x;
-      center.y = ROI.y;
-      cvCircle(frame1_color, center, 2, CV_RGB(255, 0, 0), -1);
+      center.x = ROI.x+ROI.width/2;
+      center.y = ROI.y+ROI.height/2;
+      cvCircle(frame1_color, center, 5, CV_RGB(0, 0, 255), -1);
+
     cvShowImage("GoodFeatures", frame1_color);
 //    cvWaitKey();
   }// EndWhile
