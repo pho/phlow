@@ -94,7 +94,7 @@ int main(void){
               /* If Pyramidal Lucas Kanade didn't really find the feature, skip it. */
               if ( optical_flow_found_feature[i] == 0 )       continue;
 
-              int line_thickness;                             line_thickness = 5;
+              int line_thickness;                             line_thickness = 1;
               /* CV_RGB(red, green, blue) is the red, green, and blue components
                * of the color you want, each out of 255.
                */
@@ -116,6 +116,31 @@ int main(void){
 
               if (p.y < q.y) up++;
               else down++;
+
+
+             double angle;           angle = atan2( (double) p.y - q.y, (double) p.x - q.x );
+             double hypotenuse;      hypotenuse = sqrt( square(p.y - q.y) + square(p.x - q.x) );
+
+             /* Here we lengthen the arrow by a factor of three. */
+               q.x = (int) (p.x - 3 * hypotenuse * cos(angle));
+               q.y = (int) (p.y - 3 * hypotenuse * sin(angle));
+              /* Now we draw the main line of the arrow. */
+              /* "frame1" is the frame to draw on.
+               * "p" is the point where the line begins.
+               * "q" is the point where the line stops.
+               * "CV_AA" means antialiased drawing.
+               * "0" means no fractional bits in the center cooridinate or radius.
+               */
+              cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
+              /* Now draw the tips of the arrow.  I do some scaling so that the
+               * tips look proportional to the main line of the arrow.
+               */
+              p.x = (int) (q.x + 9 * cos(angle + pi / 4));
+              p.y = (int) (q.y + 9 * sin(angle + pi / 4));
+              cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
+              p.x = (int) (q.x + 9 * cos(angle - pi / 4));
+              p.y = (int) (q.y + 9 * sin(angle - pi / 4));
+              cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
   
       }
 
@@ -131,24 +156,7 @@ int main(void){
       if (left > right and abs(left-right) > 50) cvPutText (frame1_color,"Right",cvPoint(300,400), &font, cvScalar(255,255,0));
       else cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
 
-              /* Now we draw the main line of the arrow. */
-              /* "frame1" is the frame to draw on.
-               * "p" is the point where the line begins.
-               * "q" is the point where the line stops.
-               * "CV_AA" means antialiased drawing.
-               * "0" means no fractional bits in the center cooridinate or radius.
-               */
-//              cvLine( frame1b, p, q, line_color, line_thickness, CV_AA, 0 );
-              /* Now draw the tips of the arrow.  I do some scaling so that the
-               * tips look proportional to the main line of the arrow.
-               */
-/*              p.x = (int) (q.x + 9 * cos(angle + pi / 4));
-              p.y = (int) (q.y + 9 * sin(angle + pi / 4));
-              cvLine( frame1b, p, q, line_color, line_thickness, CV_AA, 0 );
-              p.x = (int) (q.x + 9 * cos(angle - pi / 4));
-              p.y = (int) (q.y + 9 * sin(angle - pi / 4));
-              cvLine( frame1b, p, q, line_color, line_thickness, CV_AA, 0 );
-*/
+
 
    /*for( int i = 0; i < nfeat; i++){
       CvPoint p;
