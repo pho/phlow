@@ -11,6 +11,7 @@
 
 using namespace std;
 
+#define NFEAT 400
 
 static const double pi = 3.14159265358979323846;
 
@@ -55,6 +56,16 @@ void mouseCallback(int event, int x, int y, int flags, void *param){
 
 }
 
+void SimulateKey(int key){
+  Display *display;
+  unsigned int keycode;
+  display = XOpenDisplay(NULL);
+  keycode = XKeysymToKeycode(display, XK_Down);
+  XTestFakeKeyEvent(display, keycode, True, 0);
+  XTestFakeKeyEvent(display, keycode, False, 0);
+  XFlush(display);
+}
+
 
 int main(void){
   IplImage * frame1 = NULL, * frame1_color=NULL, * frame1b=NULL, *frame2 = NULL, *frame2b = NULL,  *tmp2 = NULL, *tmp1 = NULL, *cp=NULL,
@@ -83,9 +94,9 @@ int main(void){
     allocateOnDemand( &frame1b, frame_size, IPL_DEPTH_8U, 1 );
     cvConvertImage(frame1, frame1b, 0);
 
-    int nfeat = 400;
+    int nfeat = NFEAT;
 
-    CvPoint2D32f frame1_features[400];
+    CvPoint2D32f frame1_features[NFEAT];
 
     cvSetImageROI(frame1b, ROI);
     cvGoodFeaturesToTrack(frame1b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
@@ -101,11 +112,11 @@ int main(void){
     allocateOnDemand( &tmp1, frame_size, IPL_DEPTH_32F, 1);
     allocateOnDemand( &tmp2, frame_size, IPL_DEPTH_32F, 1);
     
-    CvPoint2D32f frame2_features[400];
+    CvPoint2D32f frame2_features[NFEAT];
 
-    char optical_flow_found_feature[400];
+    char optical_flow_found_feature[NFEAT];
 
-    float optical_flow_feature_error[400];
+    float optical_flow_feature_error[NFEAT];
 
     CvSize optical_flow_window = cvSize(3,3);
 
@@ -121,10 +132,10 @@ int main(void){
 
 /* For fun (and debugging :)), let's draw the flow field. */
 
-      int up=0, down=0, left=0, right=0;
+    int up=0, down=0, left=0, right=0, NewCenterX = 0, NewCenterY = 0, f2featfound=0;
 
-     for(int i = 0; i < nfeat; i++)
-      {
+    for(int i = 0; i < NFEAT; i++){
+      
               /* If Pyramidal Lucas Kanade didn't really find the feature, skip it. */
               if ( optical_flow_found_feature[i] == 0 )       continue;
 
@@ -175,6 +186,25 @@ int main(void){
               p.x = (int) (q.x + 9 * cos(angle - pi / 4));
               p.y = (int) (q.y + 9 * sin(angle - pi / 4));
               cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
+
+
+            // New ROI Center
+            if (optical_flow_found_feature[i] != 0){
+              f2featfound++;
+
+              //if (frame2_features[i].x > ROI.x+ROI.width/2)
+                NewCenterX += q.x;
+              //else
+               // NewCenterX -= q.x;
+
+              //if (frame2_features[i].y > ROI.y+ROI.height/2)
+                NewCenterY += q.y;
+              //else
+              //  NewCenterY -= q.y;
+
+            }
+
+
   
       }
 
@@ -193,30 +223,30 @@ int main(void){
       if (left > right and left > 30) cvPutText (frame1_color,"Right",cvPoint(300,400), &font, cvScalar(255,255,0));
       else if(right > 30){
         cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
-        Display *display;
-        unsigned int keycode;
-        display = XOpenDisplay(NULL);
-        keycode = XKeysymToKeycode(display, XK_Down);
-        XTestFakeKeyEvent(display, keycode, True, 0);
-        XTestFakeKeyEvent(display, keycode, False, 0);
-        XFlush(display);
-      }
+              }
 
       cvResetImageROI(frame2b);
       cvResetImageROI(frame1b);
 
       cvRectangle(frame1_color, cvPoint(ROI.x, ROI.y), cvPoint(ROI.x+ROI.width,ROI.y+ROI.height), cvScalar(255,0,0), 1);
 
+      //Update ROI
+      cout << "NewCenter: " << NewCenterX/f2featfound << " " << NewCenterY/f2featfound << " " << f2featfound << endl;
+      ROI.x = NewCenterX/f2featfound - ROI.width/2;
+      ROI.y = NewCenterY/f2featfound - ROI.height/2;
 
+      cout << "Next ROI " << ROI.x << " " << ROI.y << endl;
+      if (ROI.x < 0) ROI.x = 0;
+      if (ROI.x > frame1_color->width) ROI.x = frame1_color->width-1;
+      if (ROI.y > frame1_color->height) ROI.y = frame1_color->height-1;
+      if (ROI.y < 0) ROI.y = 0;
+      cout << "Next ROI Secured" << ROI.x << " " << ROI.y << endl << endl;
 
-   /*for( int i = 0; i < nfeat; i++){
-      CvPoint p;
-      p.x = (int) frame1_features[i].x;
-      p.y = (int) frame1_features[i].y;
-      cvCircle(frame, p, 2, CV_RGB(255, 0, 0), -1);
-    }*/
-
+      CvPoint center;
+      center.x = ROI.x;
+      center.y = ROI.y;
+      cvCircle(frame1_color, center, 2, CV_RGB(255, 0, 0), -1);
     cvShowImage("GoodFeatures", frame1_color);
-  }
-  //cvWaitKey();
+    cvWaitKey();
+  }// EndWhile
 }
