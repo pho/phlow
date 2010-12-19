@@ -4,6 +4,10 @@
 #include <cv.h>
 #include <highgui.h>
 #include <iostream>
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
+#include <X11/extensions/XTest.h>
+
 
 using namespace std;
 
@@ -187,7 +191,16 @@ int main(void){
       else if(down > 30) cvPutText (frame1_color,"Up",cvPoint(100,400), &font, cvScalar(255,255,0));
 
       if (left > right and left > 30) cvPutText (frame1_color,"Right",cvPoint(300,400), &font, cvScalar(255,255,0));
-      else if(right > 30)  cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
+      else if(right > 30){
+        cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
+        Display *display;
+        unsigned int keycode;
+        display = XOpenDisplay(NULL);
+        keycode = XKeysymToKeycode(display, XK_Down);
+        XTestFakeKeyEvent(display, keycode, True, 0);
+        XTestFakeKeyEvent(display, keycode, False, 0);
+        XFlush(display);
+      }
 
       cvResetImageROI(frame2b);
       cvResetImageROI(frame1b);
