@@ -6,7 +6,7 @@
 #include <iostream>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
-#include <X11/extensions/XTest.h>
+//#include <X11/extensions/XTest.h>
 
 
 using namespace std;
@@ -56,7 +56,7 @@ void mouseCallback(int event, int x, int y, int flags, void *param){
 
 }
 
-void SimulateKey(int key){
+/*void SimulateKey(int key){
   Display *display;
   unsigned int keycode;
   display = XOpenDisplay(NULL);
@@ -65,7 +65,7 @@ void SimulateKey(int key){
   XTestFakeKeyEvent(display, keycode, False, 0);
   XFlush(display);
 }
-
+*/
 
 int main(void){
   IplImage * frame1 = NULL, * frame1_color=NULL, * frame1b=NULL, *frame2 = NULL, *frame2b = NULL,  *tmp2 = NULL, *tmp1 = NULL, *cp=NULL,
@@ -247,6 +247,6 @@ int main(void){
       center.y = ROI.y;
       cvCircle(frame1_color, center, 2, CV_RGB(255, 0, 0), -1);
     cvShowImage("GoodFeatures", frame1_color);
-    cvWaitKey();
+//    cvWaitKey();
   }// EndWhile
 }
