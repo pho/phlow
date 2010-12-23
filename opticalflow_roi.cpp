@@ -89,7 +89,7 @@ IplImage * movement_filter(IplImage * frame1, IplImage * frame2){
 
 int main(void){
   IplImage * frame1 = NULL, * frame1_color=NULL, * frame1b=NULL, *frame2 = NULL, *frame2b = NULL,  *tmp2 = NULL, *tmp1 = NULL, *cp=NULL,
-           * pyramid1 = NULL, *pyramid2= NULL;
+           * pyramid1 = NULL, *pyramid2= NULL, *motion = NULL;
 
   CvCapture *pCapturedImage = cvCreateCameraCapture(0);
 
@@ -102,6 +102,7 @@ int main(void){
             return -1;
   }
   cvNamedWindow("GoodFeatures",CV_WINDOW_AUTOSIZE);
+  cvNamedWindow("Motion",CV_WINDOW_AUTOSIZE);
 
   cvSetMouseCallback("GoodFeatures", mouseCallback, NULL);
 
@@ -114,6 +115,7 @@ int main(void){
   allocateOnDemand( &frame1b, frame_size, IPL_DEPTH_8U, 1 );
 
   allocateOnDemand( &frame2b, frame_size, IPL_DEPTH_8U, 1 );
+  allocateOnDemand( &motion, frame_size, IPL_DEPTH_8U, 1);
 
   //Storage for the Shi and Tomasi Algorithm
   allocateOnDemand( &tmp1, frame_size, IPL_DEPTH_32F, 1);
@@ -122,23 +124,38 @@ int main(void){
   allocateOnDemand( &pyramid1, frame_size, IPL_DEPTH_8U, 1);
   allocateOnDemand( &pyramid2, frame_size, IPL_DEPTH_8U, 1);
     
-  
+ 
+  int nfeat = NFEAT;
+  CvPoint2D32f frame1_features[NFEAT];
+  CvPoint2D32f frame1_features_backup[NFEAT];
+
   while(cvWaitKey(10)){
     
     frame1 = cvQueryFrame(pCapturedImage);
     cvConvertImage(frame1, frame1_color, 0);
     cvConvertImage(frame1, frame1b, 0);
 
-    int nfeat = NFEAT;
-    CvPoint2D32f frame1_features[NFEAT];
-
     frame2 = cvQueryFrame(pCapturedImage);
     cvConvertImage(frame2, frame2b, 0);
+
+    motion = movement_filter(frame1b, frame2b);
 
     cvSetImageROI(frame1b, ROI);
     cvGoodFeaturesToTrack(frame1b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
     cvResetImageROI(frame1b);
-    
+
+   /* if (nfeat > 0)
+      printf("Backup!");
+      for (int i=0; i < NFEAT; i++)
+        frame1_features_backup[i] = frame1_features[i];
+
+    if ( nfeat == 0  )
+      printf("Restaurando Backup!");
+      for (int i=0; i < NFEAT; i++)
+        frame1_features[i] = frame1_features_backup[i];
+*/
+    if ( nfeat > 0){
+
     CvPoint2D32f frame2_features[NFEAT];
     char optical_flow_found_feature[NFEAT];
     float optical_flow_feature_error[NFEAT];
@@ -255,8 +272,10 @@ int main(void){
       center.x = ROI.x+ROI.width/2;
       center.y = ROI.y+ROI.height/2;
       cvCircle(frame1_color, center, 5, CV_RGB(0, 0, 255), -1);
+    }// If Experimental
 
     cvShowImage("GoodFeatures", frame1_color);
+    cvShowImage("Motion", motion);
 //    cvWaitKey();
   }// EndWhile
 }
