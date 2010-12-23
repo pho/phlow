@@ -56,16 +56,36 @@ void mouseCallback(int event, int x, int y, int flags, void *param){
 
 }
 
-/*void SimulateKey(int key){
-  Display *display;
-  unsigned int keycode;
-  display = XOpenDisplay(NULL);
-  keycode = XKeysymToKeycode(display, XK_Down);
-  XTestFakeKeyEvent(display, keycode, True, 0);
-  XTestFakeKeyEvent(display, keycode, False, 0);
-  XFlush(display);
+IplImage * movement_filter(IplImage * frame1, IplImage * frame2){
+
+  if ( frame1->width != frame2->width || frame1->height != frame2->height ){
+    cout << "Diferent Sizes!" << endl;
+    exit(-1);
+  }
+
+  IplImage * frame1b=cvCreateImage(cvSize(frame1->width, frame1->height), IPL_DEPTH_8U,1);
+  IplImage * frame2b=cvCreateImage(cvSize(frame2->width, frame2->height), IPL_DEPTH_8U,1);
+  IplImage * ret=cvCreateImage(cvSize(frame2->width, frame2->height), IPL_DEPTH_8U,1);
+
+  int step = frame1->widthStep;
+  uchar* data    = (uchar *)ret->imageData;
+
+  for ( int i = 0; i < frame1->height; i++){
+    for (int j = 0; j < frame1->width; j++){
+
+      uchar cf1 =  (frame1->imageData + i*step)[j];
+      uchar cf2 =  (frame2->imageData + i*step)[j];
+
+      if ( abs(cf1-cf2) < 25 ){
+        (ret->imageData + i*step)[j] = 0;
+        }
+      else
+        (ret->imageData + i*step)[j] = cf1;
+    }
+  }
+  return ret;
 }
-*/
+
 
 int main(void){
   IplImage * frame1 = NULL, * frame1_color=NULL, * frame1b=NULL, *frame2 = NULL, *frame2b = NULL,  *tmp2 = NULL, *tmp1 = NULL, *cp=NULL,
@@ -85,54 +105,47 @@ int main(void){
 
   cvSetMouseCallback("GoodFeatures", mouseCallback, NULL);
 
+  frame1 = cvQueryFrame(pCapturedImage);
+  CvSize frame_size;
+  frame_size.width = frame1->width;
+  frame_size.height = frame1->height;
 
-  while(cvWaitKey(10)){
+  allocateOnDemand( &frame1_color, frame_size, IPL_DEPTH_8U, 3 );
+  allocateOnDemand( &frame1b, frame_size, IPL_DEPTH_8U, 1 );
 
+  allocateOnDemand( &frame2b, frame_size, IPL_DEPTH_8U, 1 );
 
-    frame1 = cvQueryFrame(pCapturedImage);
-
-
-    CvSize frame_size;
-    frame_size.width = frame1->width;
-    frame_size.height = frame1->height;
-
-    allocateOnDemand( &frame1_color, frame_size, IPL_DEPTH_8U, 3 );
-    cvConvertImage(frame1, frame1_color, 0);
+  //Storage for the Shi and Tomasi Algorithm
+  allocateOnDemand( &tmp1, frame_size, IPL_DEPTH_32F, 1);
+  allocateOnDemand( &tmp2, frame_size, IPL_DEPTH_32F, 1);
+  
+  allocateOnDemand( &pyramid1, frame_size, IPL_DEPTH_8U, 1);
+  allocateOnDemand( &pyramid2, frame_size, IPL_DEPTH_8U, 1);
     
-    allocateOnDemand( &frame1b, frame_size, IPL_DEPTH_8U, 1 );
+  
+  while(cvWaitKey(10)){
+    
+    frame1 = cvQueryFrame(pCapturedImage);
+    cvConvertImage(frame1, frame1_color, 0);
     cvConvertImage(frame1, frame1b, 0);
 
     int nfeat = NFEAT;
-
     CvPoint2D32f frame1_features[NFEAT];
+
+    frame2 = cvQueryFrame(pCapturedImage);
+    cvConvertImage(frame2, frame2b, 0);
 
     cvSetImageROI(frame1b, ROI);
     cvGoodFeaturesToTrack(frame1b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
     cvResetImageROI(frame1b);
-
-
-    frame2 = cvQueryFrame(pCapturedImage);
-    allocateOnDemand( &frame2b, frame_size, IPL_DEPTH_8U, 1 );
-    cvConvertImage(frame2, frame2b, 0);
-    
-
-    //Storage for the Shi and Tomasi Algorithm
-    allocateOnDemand( &tmp1, frame_size, IPL_DEPTH_32F, 1);
-    allocateOnDemand( &tmp2, frame_size, IPL_DEPTH_32F, 1);
     
     CvPoint2D32f frame2_features[NFEAT];
-
     char optical_flow_found_feature[NFEAT];
-
     float optical_flow_feature_error[NFEAT];
-
     CvSize optical_flow_window = cvSize(3,3);
-
     CvTermCriteria optical_flow_termination_criteria = cvTermCriteria( CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, .3);
 
-    allocateOnDemand( &pyramid1, frame_size, IPL_DEPTH_8U, 1);
-    allocateOnDemand( &pyramid2, frame_size, IPL_DEPTH_8U, 1);
-    
+       
     cvSetImageROI(frame2b, ROI);
     cvSetImageROI(frame1b, ROI);
     cvCalcOpticalFlowPyrLK(frame1b, frame2b, pyramid1, pyramid2, frame1_features, frame2_features, nfeat, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error,optical_flow_termination_criteria, 0);
