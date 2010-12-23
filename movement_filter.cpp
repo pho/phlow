@@ -108,17 +108,18 @@ int main(void){
     CvPoint2D32f frame1_features[300];
 
     int nfeat = 300;
-
-    cvGoodFeaturesToTrack( movement_filter(motion,fbn), tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
+    motion = movement_filter(motion,fbn);
+    cvGoodFeaturesToTrack( motion, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
 
     for( int i = 0; i < nfeat; i++){
       CvPoint p;
       p.x = (int) frame1_features[i].x;
       p.y = (int) frame1_features[i].y;
-      cvCircle(frame2, p, 2, CV_RGB(255, 0, 0), -1);
+      cvCircle(frame, p, 2, CV_RGB(255, 0, 0), -1);
     }
 
-    cvShowImage("GoodFeatures", frame2);
+    cvShowImage("GoodFeatures", frame);
+    cvShowImage("Motion", motion);
   }
   //cvWaitKey();
 }
