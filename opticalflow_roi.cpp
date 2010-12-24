@@ -195,15 +195,16 @@ int main(void){
               int motionp = (int) (motion->imageData + p.y*motion->widthStep)[p.x];
               int motionq = (int) (motion->imageData + q.y*motion->widthStep)[q.x];
 
+              if (motionp == 0 && motionq == 0)
+                optical_flow_found_feature[i] = 0;
+
                 if (q.x - p.x > 10) right++;
                 else if (p.x - q.x > 10) left++;
 
                 if  (q.y - p.y > 10) up++;
                 else if (p.y - q.y > 10)down++;
               // New ROI Center
-              if (motionp == 0 && motionq == 0)
-                optical_flow_found_feature[i] = 0;
-
+              
               if (optical_flow_found_feature[i] != 0){
                 f2featfound++;
                 NewCenterX += q.x;
