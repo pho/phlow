@@ -68,7 +68,6 @@ IplImage * movement_filter(IplImage * frame1, IplImage * frame2){
   IplImage * ret=cvCreateImage(cvSize(frame2->width, frame2->height), IPL_DEPTH_8U,1);
 
   int step = frame1->widthStep;
-  uchar* data    = (uchar *)ret->imageData;
 
   for ( int i = 0; i < frame1->height; i++){
     for (int j = 0; j < frame1->width; j++){
@@ -125,12 +124,12 @@ int main(void){
   allocateOnDemand( &pyramid2, frame_size, IPL_DEPTH_8U, 1);
     
  
-  int nfeat = NFEAT;
-  CvPoint2D32f frame1_features[NFEAT];
-  CvPoint2D32f frame1_features_backup[NFEAT];
-
+  
   while(cvWaitKey(10)){
-    
+    int nfeat = NFEAT;
+    CvPoint2D32f frame1_features[NFEAT];
+    CvPoint2D32f frame1_features_backup[NFEAT];
+
     frame1 = cvQueryFrame(pCapturedImage);
     cvConvertImage(frame1, frame1_color, 0);
     cvConvertImage(frame1, frame1b, 0);
@@ -154,7 +153,6 @@ int main(void){
       for (int i=0; i < NFEAT; i++)
         frame1_features[i] = frame1_features_backup[i];
 */
-    if ( nfeat > 0){
 
     CvPoint2D32f frame2_features[NFEAT];
     char optical_flow_found_feature[NFEAT];
@@ -194,11 +192,24 @@ int main(void){
               q.x = (int) frame2_features[i].x + ROI.x;
               q.y = (int) frame2_features[i].y + ROI.y;
 
-              if (q.x - p.x > 10) right++;
-              else if (p.x - q.x > 10) left++;
+              int motionp = (int) (motion->imageData + p.y*motion->widthStep)[p.x];
+              int motionq = (int) (motion->imageData + q.y*motion->widthStep)[q.x];
 
-              if  (q.y - p.y > 10) up++;
-              else if (p.y - q.y > 10)down++;
+              if (motionp != 0 && motionq != 0){
+                if (q.x - p.x > 10) right++;
+                else if (p.x - q.x > 10) left++;
+
+                if  (q.y - p.y > 10) up++;
+                else if (p.y - q.y > 10)down++;
+              }
+              // New ROI Center
+              if (optical_flow_found_feature[i] != 0){
+                f2featfound++;
+                NewCenterX += q.x;
+                NewCenterY += q.y;
+              }
+              
+
 
 
              double angle;           angle = atan2( (double) p.y - q.y, (double) p.x - q.x );
@@ -225,13 +236,7 @@ int main(void){
               p.y = (int) (q.y + 9 * sin(angle - pi / 4));
               cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
 
-            // New ROI Center
-            if (optical_flow_found_feature[i] != 0){
-              f2featfound++;
-                NewCenterX += q.x;
-                NewCenterY += q.y;
-            }
-      }
+                 }
 
       CvFont font;
       double hScale=1.0;
@@ -255,6 +260,7 @@ int main(void){
 
       cvRectangle(frame1_color, cvPoint(ROI.x, ROI.y), cvPoint(ROI.x+ROI.width,ROI.y+ROI.height), cvScalar(255,0,0), 1);
 
+    if ( nfeat > 0){
       //Update ROI
       cout << "NewCenter: " << NewCenterX/f2featfound << " " << NewCenterY/f2featfound << " " << f2featfound << endl;
       ROI.x = NewCenterX/f2featfound - ROI.width/2;
