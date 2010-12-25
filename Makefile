@@ -1,4 +1,4 @@
-OPS=-I /usr/local/include/opencv -L /usr/local/lib  -lm -lcv -lhighgui -lcvaux
+OPS= -g -I /usr/local/include/opencv -L /usr/local/lib  -lm -lcv -lhighgui -lcvaux
 
 all: goodfeatures opticalflow_roi optical_flow_global optical_flow_field movement_filter
 
