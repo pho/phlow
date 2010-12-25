@@ -125,24 +125,24 @@ int main(void){
   allocateOnDemand( &pyramid2, frame_size, IPL_DEPTH_8U, 1);
 
 
-
   while(cvWaitKey(10)){
     int nfeat = NFEAT;
     CvPoint2D32f frame1_features[NFEAT];
     CvPoint2D32f frame1_features_backup[NFEAT];
-
+    
+    cvConvertImage(frame1, frame2b, 0);
     frame1 = cvQueryFrame(pCapturedImage);
+
     cvConvertImage(frame1, frame1_color, 0);
     cvConvertImage(frame1, frame1b, 0);
 
-    frame2 = cvQueryFrame(pCapturedImage);
-    cvConvertImage(frame2, frame2b, 0);
+    //frame2 = cvQueryFrame(pCapturedImage);
 
-    motion = movement_filter(frame1b, frame2b);
+    motion = movement_filter(frame2b, frame1b);
 
-    cvSetImageROI(frame1b, ROI);
-    cvGoodFeaturesToTrack(frame1b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
-    cvResetImageROI(frame1b);
+    cvSetImageROI(frame2b, ROI);
+    cvGoodFeaturesToTrack(frame2b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
+    cvResetImageROI(frame2b);
 
     CvPoint2D32f frame2_features[NFEAT];
     char optical_flow_found_feature[NFEAT];
@@ -153,7 +153,7 @@ int main(void){
 
     cvSetImageROI(frame2b, ROI);
     cvSetImageROI(frame1b, ROI);
-    cvCalcOpticalFlowPyrLK(frame1b, frame2b, pyramid1, pyramid2, frame1_features, frame2_features, nfeat, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error,optical_flow_termination_criteria, 0);
+    cvCalcOpticalFlowPyrLK(frame2b, frame1b, pyramid1, pyramid2, frame1_features, frame2_features, nfeat, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error,optical_flow_termination_criteria, 0);
 
 
     /* For fun (and debugging :)), let's draw the flow field. */
@@ -178,10 +178,10 @@ int main(void){
        * (ie: there's not much motion between the frames).  So let's lengthen them by a factor of 3.
        */
       CvPoint p,q;
-      p.x = (int) frame1_features[i].x + ROI.x;
-      p.y = (int) frame1_features[i].y + ROI.y;
-      q.x = (int) frame2_features[i].x + ROI.x;
-      q.y = (int) frame2_features[i].y + ROI.y;
+      p.x = (int) frame2_features[i].x + ROI.x;
+      p.y = (int) frame2_features[i].y + ROI.y;
+      q.x = (int) frame1_features[i].x + ROI.x;
+      q.y = (int) frame1_features[i].y + ROI.y;
 
       int motionp = (int) (motion->imageData + p.y*motion->widthStep)[p.x];
       int motionq = (int) (motion->imageData + q.y*motion->widthStep)[q.x];
@@ -269,17 +269,10 @@ int main(void){
       center.x = ROI.x+ROI.width/2;
       center.y = ROI.y+ROI.height/2;
       cvCircle(frame1_color, center, 5, CV_RGB(0, 0, 255), -1);
-    }// If Experimental
+    }
 
     cvShowImage("GoodFeatures", frame1_color);
     cvShowImage("Motion", motion);
 
-    cvReleaseImage(&motion);
-    //if (&frame1_color != NULL) cvReleaseImage(&frame1_color);
-    //if (frame1b != NULL) cvReleaseImage(&frame1b);
-    //if (&frame2b != NULL) cvReleaseImage(&frame2b);
-    //if (frame1 != NULL) cvReleaseImage(&frame1);
-    //if (frame2 != NULL) cvReleaseImage(&frame2);
-    //    cvWaitKey();
   }// EndWhile
 }
