@@ -74,7 +74,7 @@ IplImage * movement_filter(IplImage * frame1, IplImage * frame2){
       uchar cf1 =  (frame1->imageData + i*step)[j];
       uchar cf2 =  (frame2->imageData + i*step)[j];
 
-      if ( abs(cf1-cf2) < 25 ){
+      if ( abs(cf1-cf2) < 15 ){
         (ret->imageData + i*step)[j] = 0;
       }
       else
@@ -174,9 +174,7 @@ int main(void){
       /* If Pyramidal Lucas Kanade didn't really find the feature, skip it. */
       if ( optical_flow_found_feature[i] == 0 )       continue;
 
-      if (motionp == 0 && motionq == 0)
-        continue;
-
+      
       int line_thickness;                             line_thickness = 1;
       /* CV_RGB(red, green, blue) is the red, green, and blue components
        * of the color you want, each out of 255.
@@ -196,6 +194,9 @@ int main(void){
 
       int motionp = (int) (motion->imageData + p.y*motion->widthStep)[p.x];
       int motionq = (int) (motion->imageData + q.y*motion->widthStep)[q.x];
+      
+      if (motionp == 0 && motionq == 0)
+        continue;
 
 
       if (q.x - p.x > 10) right++;
@@ -258,7 +259,7 @@ int main(void){
 
     cvRectangle(frame1_color, cvPoint(ROI.x, ROI.y), cvPoint(ROI.x+ROI.width,ROI.y+ROI.height), cvScalar(255,0,0), 1);
 
-    if ( f2featfound > 0){
+    if ( f2featfound > 30){
       //Update ROI
       cout << NewCenterX << " " <<  f2featfound << " " << NewCenterY << endl;
       cout << "NewCenter: " << NewCenterX/f2featfound << " " << NewCenterY/f2featfound << " " << f2featfound << endl;
