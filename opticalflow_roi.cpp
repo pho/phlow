@@ -138,11 +138,11 @@ int main(void){
 
     //frame2 = cvQueryFrame(pCapturedImage);
 
-    motion = movement_filter(frame2b, frame1b);
+    motion = movement_filter(frame1b, frame2b);
 
-    cvSetImageROI(frame2b, ROI);
-    cvGoodFeaturesToTrack(frame2b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
-    cvResetImageROI(frame2b);
+    cvSetImageROI(frame1b, ROI);
+    cvGoodFeaturesToTrack(frame1b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
+    cvResetImageROI(frame1b);
 
     CvPoint2D32f frame2_features[NFEAT];
     char optical_flow_found_feature[NFEAT];
@@ -153,7 +153,7 @@ int main(void){
 
     cvSetImageROI(frame2b, ROI);
     cvSetImageROI(frame1b, ROI);
-    cvCalcOpticalFlowPyrLK(frame2b, frame1b, pyramid1, pyramid2, frame1_features, frame2_features, nfeat, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error,optical_flow_termination_criteria, 0);
+    cvCalcOpticalFlowPyrLK(frame1b, frame2b, pyramid1, pyramid2, frame1_features, frame2_features, nfeat, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error,optical_flow_termination_criteria, 0);
 
 
     /* For fun (and debugging :)), let's draw the flow field. */
