@@ -15,9 +15,8 @@ using namespace std;
 
 static const double pi = 3.14159265358979323846;
 
-inline static double square(int a)
-{
-          return a * a;
+inline static double square(int a){
+  return a * a;
 }
 
 
@@ -26,12 +25,12 @@ inline static void allocateOnDemand( IplImage **img, CvSize size, int depth, int
 {
   if ( *img != NULL ) return;
 
-   *img = cvCreateImage( size, depth, channels );
-        if ( *img == NULL )
-            {
-                  fprintf(stderr, "Error: Couldn't allocate image.  Out of memory?\n");
-                      exit(-1);
-       }
+  *img = cvCreateImage( size, depth, channels );
+  if ( *img == NULL )
+  {
+    fprintf(stderr, "Error: Couldn't allocate image.  Out of memory?\n");
+    exit(-1);
+  }
 }
 
 CvRect ROI = cvRect(100, 100, 200, 200);
@@ -77,7 +76,7 @@ IplImage * movement_filter(IplImage * frame1, IplImage * frame2){
 
       if ( abs(cf1-cf2) < 25 ){
         (ret->imageData + i*step)[j] = 0;
-        }
+      }
       else
         (ret->imageData + i*step)[j] = cf1;
     }
@@ -93,12 +92,12 @@ int main(void){
   CvCapture *pCapturedImage = cvCreateCameraCapture(0);
 
   if (pCapturedImage == NULL)
-      {
-            /* Either the video didn't exist OR it uses a codec OpenCV
-             *     * doesn't support.
-             *         */
-            fprintf(stderr, "Error: Can't open video.\n");
-            return -1;
+  {
+    /* Either the video didn't exist OR it uses a codec OpenCV
+     *     * doesn't support.
+     *         */
+    fprintf(stderr, "Error: Can't open video.\n");
+    return -1;
   }
   cvNamedWindow("GoodFeatures",CV_WINDOW_AUTOSIZE);
   cvNamedWindow("Motion",CV_WINDOW_AUTOSIZE);
@@ -119,12 +118,12 @@ int main(void){
   //Storage for the Shi and Tomasi Algorithm
   allocateOnDemand( &tmp1, frame_size, IPL_DEPTH_32F, 1);
   allocateOnDemand( &tmp2, frame_size, IPL_DEPTH_32F, 1);
-  
+
   allocateOnDemand( &pyramid1, frame_size, IPL_DEPTH_8U, 1);
   allocateOnDemand( &pyramid2, frame_size, IPL_DEPTH_8U, 1);
-    
- 
-  
+
+
+
   while(cvWaitKey(10)){
     int nfeat = NFEAT;
     CvPoint2D32f frame1_features[NFEAT];
@@ -143,16 +142,16 @@ int main(void){
     cvGoodFeaturesToTrack(frame1b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
     cvResetImageROI(frame1b);
 
-   /* if (nfeat > 0)
-      printf("Backup!");
-      for (int i=0; i < NFEAT; i++)
-        frame1_features_backup[i] = frame1_features[i];
+    /* if (nfeat > 0)
+       printf("Backup!");
+       for (int i=0; i < NFEAT; i++)
+       frame1_features_backup[i] = frame1_features[i];
 
-    if ( nfeat == 0  )
-      printf("Restaurando Backup!");
-      for (int i=0; i < NFEAT; i++)
-        frame1_features[i] = frame1_features_backup[i];
-*/
+       if ( nfeat == 0  )
+       printf("Restaurando Backup!");
+       for (int i=0; i < NFEAT; i++)
+       frame1_features[i] = frame1_features_backup[i];
+       */
 
     CvPoint2D32f frame2_features[NFEAT];
     char optical_flow_found_feature[NFEAT];
@@ -160,107 +159,104 @@ int main(void){
     CvSize optical_flow_window = cvSize(3,3);
     CvTermCriteria optical_flow_termination_criteria = cvTermCriteria( CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, .3);
 
-       
+
     cvSetImageROI(frame2b, ROI);
     cvSetImageROI(frame1b, ROI);
     cvCalcOpticalFlowPyrLK(frame1b, frame2b, pyramid1, pyramid2, frame1_features, frame2_features, nfeat, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error,optical_flow_termination_criteria, 0);
-    
 
-/* For fun (and debugging :)), let's draw the flow field. */
+
+    /* For fun (and debugging :)), let's draw the flow field. */
 
     int up=0, down=0, left=0, right=0, NewCenterX = 0, NewCenterY = 0, f2featfound=0;
 
     for(int i = 0; i < NFEAT; i++){
-      
-              /* If Pyramidal Lucas Kanade didn't really find the feature, skip it. */
-              if ( optical_flow_found_feature[i] == 0 )       continue;
 
-              int line_thickness;                             line_thickness = 1;
-              /* CV_RGB(red, green, blue) is the red, green, and blue components
-               * of the color you want, each out of 255.
-               */
-              CvScalar line_color;                    line_color = CV_RGB(255,0,0);
+      /* If Pyramidal Lucas Kanade didn't really find the feature, skip it. */
+      if ( optical_flow_found_feature[i] == 0 )       continue;
 
-              /* Let's make the flow field look nice with arrows. */
+      if (motionp == 0 && motionq == 0)
+        continue;
 
-              /* The arrows will be a bit too short for a nice visualization because of the high framerate
-               * (ie: there's not much motion between the frames).  So let's lengthen them by a factor of 3.
-               */
-              CvPoint p,q;
-              p.x = (int) frame1_features[i].x + ROI.x;
-              p.y = (int) frame1_features[i].y + ROI.y;
-              q.x = (int) frame2_features[i].x + ROI.x;
-              q.y = (int) frame2_features[i].y + ROI.y;
+      int line_thickness;                             line_thickness = 1;
+      /* CV_RGB(red, green, blue) is the red, green, and blue components
+       * of the color you want, each out of 255.
+       */
+      CvScalar line_color;                    line_color = CV_RGB(255,0,0);
 
-              int motionp = (int) (motion->imageData + p.y*motion->widthStep)[p.x];
-              int motionq = (int) (motion->imageData + q.y*motion->widthStep)[q.x];
+      /* Let's make the flow field look nice with arrows. */
 
-              if (motionp == 0 && motionq == 0)
-                optical_flow_found_feature[i] = 0;
+      /* The arrows will be a bit too short for a nice visualization because of the high framerate
+       * (ie: there's not much motion between the frames).  So let's lengthen them by a factor of 3.
+       */
+      CvPoint p,q;
+      p.x = (int) frame1_features[i].x + ROI.x;
+      p.y = (int) frame1_features[i].y + ROI.y;
+      q.x = (int) frame2_features[i].x + ROI.x;
+      q.y = (int) frame2_features[i].y + ROI.y;
 
-                if (q.x - p.x > 10) right++;
-                else if (p.x - q.x > 10) left++;
-
-                if  (q.y - p.y > 10) up++;
-                else if (p.y - q.y > 10)down++;
-              // New ROI Center
-              
-              if (optical_flow_found_feature[i] != 0){
-                f2featfound++;
-                NewCenterX += q.x;
-                NewCenterY += q.y;
-              }
-              
+      int motionp = (int) (motion->imageData + p.y*motion->widthStep)[p.x];
+      int motionq = (int) (motion->imageData + q.y*motion->widthStep)[q.x];
 
 
+      if (q.x - p.x > 10) right++;
+      else if (p.x - q.x > 10) left++;
 
-             double angle;           angle = atan2( (double) p.y - q.y, (double) p.x - q.x );
-             double hypotenuse;      hypotenuse = sqrt( square(p.y - q.y) + square(p.x - q.x) );
+      if  (q.y - p.y > 10) up++;
+      else if (p.y - q.y > 10)down++;
+      // New ROI Center
 
-             /* Here we lengthen the arrow by a factor of three. */
-               q.x = (int) (p.x - 3 * hypotenuse * cos(angle));
-               q.y = (int) (p.y - 3 * hypotenuse * sin(angle));
-              /* Now we draw the main line of the arrow. */
-              /* "frame1" is the frame to draw on.
-               * "p" is the point where the line begins.
-               * "q" is the point where the line stops.
-               * "CV_AA" means antialiased drawing.
-               * "0" means no fractional bits in the center cooridinate or radius.
-               */
-              cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
-              /* Now draw the tips of the arrow.  I do some scaling so that the
-               * tips look proportional to the main line of the arrow.
-               */
-              p.x = (int) (q.x + 9 * cos(angle + pi / 4));
-              p.y = (int) (q.y + 9 * sin(angle + pi / 4));
-              cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
-              p.x = (int) (q.x + 9 * cos(angle - pi / 4));
-              p.y = (int) (q.y + 9 * sin(angle - pi / 4));
-              cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
+      f2featfound++;
+      NewCenterX += q.x;
+      NewCenterY += q.y;
 
-                 }
 
-      CvFont font;
-      double hScale=1.0;
-      double vScale=1.0;
-      int    lineWidth=2;
-      cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, hScale,vScale,0,lineWidth);
+      double angle;           angle = atan2( (double) p.y - q.y, (double) p.x - q.x );
+      double hypotenuse;      hypotenuse = sqrt( square(p.y - q.y) + square(p.x - q.x) );
 
-      if (up > down and up > 30) {
-        cvPutText (frame1_color,"Down",cvPoint(100,400), &font, cvScalar(255,255,0));
-        cout << "DOWN!" << endl;
-      }
-      else if(down > 30) cvPutText (frame1_color,"Up",cvPoint(100,400), &font, cvScalar(255,255,0));
+      /* Here we lengthen the arrow by a factor of three. */
+      q.x = (int) (p.x - 3 * hypotenuse * cos(angle));
+      q.y = (int) (p.y - 3 * hypotenuse * sin(angle));
+      /* Now we draw the main line of the arrow. */
+      /* "frame1" is the frame to draw on.
+       * "p" is the point where the line begins.
+       * "q" is the point where the line stops.
+       * "CV_AA" means antialiased drawing.
+       * "0" means no fractional bits in the center cooridinate or radius.
+       */
+      cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
+      /* Now draw the tips of the arrow.  I do some scaling so that the
+       * tips look proportional to the main line of the arrow.
+       */
+      p.x = (int) (q.x + 9 * cos(angle + pi / 4));
+      p.y = (int) (q.y + 9 * sin(angle + pi / 4));
+      cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
+      p.x = (int) (q.x + 9 * cos(angle - pi / 4));
+      p.y = (int) (q.y + 9 * sin(angle - pi / 4));
+      cvLine( frame1_color, p, q, line_color, line_thickness, CV_AA, 0 );
 
-      if (left > right and left > 30) cvPutText (frame1_color,"Right",cvPoint(300,400), &font, cvScalar(255,255,0));
-      else if(right > 30){
-        cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
-              }
+    }
 
-      cvResetImageROI(frame2b);
-      cvResetImageROI(frame1b);
+    CvFont font;
+    double hScale=1.0;
+    double vScale=1.0;
+    int    lineWidth=2;
+    cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, hScale,vScale,0,lineWidth);
 
-      cvRectangle(frame1_color, cvPoint(ROI.x, ROI.y), cvPoint(ROI.x+ROI.width,ROI.y+ROI.height), cvScalar(255,0,0), 1);
+    if (up > down and up > 30) {
+      cvPutText (frame1_color,"Down",cvPoint(100,400), &font, cvScalar(255,255,0));
+      cout << "DOWN!" << endl;
+    }
+    else if(down > 30) cvPutText (frame1_color,"Up",cvPoint(100,400), &font, cvScalar(255,255,0));
+
+    if (left > right and left > 30) cvPutText (frame1_color,"Right",cvPoint(300,400), &font, cvScalar(255,255,0));
+    else if(right > 30){
+      cvPutText (frame1_color,"Left",cvPoint(300,400), &font, cvScalar(255,255,0));
+    }
+
+    cvResetImageROI(frame2b);
+    cvResetImageROI(frame1b);
+
+    cvRectangle(frame1_color, cvPoint(ROI.x, ROI.y), cvPoint(ROI.x+ROI.width,ROI.y+ROI.height), cvScalar(255,0,0), 1);
 
     if ( f2featfound > 0){
       //Update ROI
@@ -275,7 +271,7 @@ int main(void){
       if (ROI.y > frame1_color->height) ROI.y = frame1_color->height-1;
       if (ROI.y < 0) ROI.y = 0;
       cout << "Next ROI Secured" << ROI.x << " " << ROI.y << endl << endl;
-      
+
       //Draw NewCenter
       CvPoint center;
       center.x = ROI.x+ROI.width/2;
@@ -285,6 +281,6 @@ int main(void){
 
     cvShowImage("GoodFeatures", frame1_color);
     cvShowImage("Motion", motion);
-//    cvWaitKey();
+    //    cvWaitKey();
   }// EndWhile
 }
