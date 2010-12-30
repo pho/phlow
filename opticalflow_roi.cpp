@@ -74,7 +74,7 @@ IplImage * movement_filter(IplImage * frame1, IplImage * frame2){
       uchar cf1 =  (frame1->imageData + i*step)[j];
       uchar cf2 =  (frame2->imageData + i*step)[j];
 
-      if ( abs(cf1-cf2) < 15 ){
+      if ( abs(cf1-cf2) < 35 ){
         (ret->imageData + i*step)[j] = 0;
       }
       else
@@ -140,16 +140,15 @@ int main(void){
 
     motion = movement_filter(frame1b, frame2b);
 
-    cvSetImageROI(frame1b, ROI);
-    cvGoodFeaturesToTrack(frame1b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
-    cvResetImageROI(frame1b);
+    cvSetImageROI(frame2b, ROI);
+    cvGoodFeaturesToTrack(frame2b, tmp1, tmp2, frame1_features, &nfeat, .01, .01, NULL);
+    cvResetImageROI(frame2b);
 
     CvPoint2D32f frame2_features[NFEAT];
     char optical_flow_found_feature[NFEAT];
     float optical_flow_feature_error[NFEAT];
     CvSize optical_flow_window = cvSize(3,3);
     CvTermCriteria optical_flow_termination_criteria = cvTermCriteria( CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, .3);
-
 
     cvSetImageROI(frame2b, ROI);
     cvSetImageROI(frame1b, ROI);
@@ -250,7 +249,7 @@ int main(void){
 
     cvRectangle(frame1_color, cvPoint(ROI.x, ROI.y), cvPoint(ROI.x+ROI.width,ROI.y+ROI.height), cvScalar(255,0,0), 1);
 
-    if ( f2featfound > 30){
+    if ( f2featfound > 20){
       //Update ROI
       cout << NewCenterX << " " <<  f2featfound << " " << NewCenterY << endl;
       cout << "NewCenter: " << NewCenterX/f2featfound << " " << NewCenterY/f2featfound << " " << f2featfound << endl;
